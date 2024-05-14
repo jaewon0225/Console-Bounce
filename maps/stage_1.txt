@@ -1,20 +1,20 @@
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-M                                                                              M
-M                                                                              M
-M                                                                              M
-M                                                                              M
-M                                                                              M
-M                                                                              M
-M                                                                              M
-M                                                                              M
-M                                                                              M
-M                                                                              M
-M                                                   MMMMMMMMMMM                M
-M                                                   MMMMMMMMMMM                M
-M                                                                              M
-M      X                         MMMMMMMMMMM                                   O
-M                                MMMMMMMMMMM                                   O
-M                                                                              O
-M             MMMMMMMMMMM                                                      O
-M             MMMMMMMMMMM                                                      O
-MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                    MMMMMMMMMMM                 
+                                                    MMMMMMMMMMM                 
+                                                                                
+       X                         MMMMMMMMMMM                                   O
+                                 MMMMMMMMMMM                                   O
+                                                                               O
+              MMMMMMMMMMM                                                      O
+              MMMMMMMMMMM                                                      O
+                                                                                

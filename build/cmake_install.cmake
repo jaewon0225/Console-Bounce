@@ -1,4 +1,4 @@
-# Install script for directory: /Users/jaewon/cpp_projects/console_game
+# Install script for directory: /Users/jaewon/cpp_projects/Console_Bounce
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/jaewon/cpp_projects/console_game/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/jaewon/cpp_projects/Console_Bounce/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

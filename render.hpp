@@ -65,13 +65,16 @@ public:
             system("clear"); // Clear console on other systems (Linux, macOS)
         #endif
         
-
+        std::string mString(82, 'M');
+        std::cout << mString << std::endl;
         for (auto& vec : background) {
+            std::cout << "M";
             for (auto& pix : vec) {
                 std::cout << pix;
             }
-            std::cout << std::endl;
+            std::cout << "M" << std::endl;
         }
+        std::cout << mString << std::endl;
     }
 
 

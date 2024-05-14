@@ -12,7 +12,7 @@ public:
     std::vector<float> position = {0.0f, 0.0f};
     float max_velocity = 3.0f;
     std::vector<float> acceleration = {0.0f, -100.0f};
-    std::vector<float> velocity = {30.0f, 30.0f};
+    std::vector<float> velocity = {20.0f, 20.0f};
     int radius;
     
     Ball() = default;
@@ -108,8 +108,8 @@ class Solver
 public:
     Ball ball;
     ObstacleMap obstacle_map;
-    float dt = 0.01f;
-    std::vector<int> window_size = {80, 40};
+    float dt = 0.02f;
+    std::vector<int> window_size = {80, 20};
     std::vector<float> new_p;
     int checked = 0;
 
@@ -121,8 +121,10 @@ public:
     {   
         if (std::abs(new_p.at(0) - obstacle_coords.x) < 1.0f && std::abs(new_p.at(1) - obstacle_coords.y) < 1.0f) {
             calculateBounce(obstacle_coords);   
+            checked += 1;
         }
         else {
+            updateVectors();
             ball.position = new_p;
         }
     }
@@ -183,13 +185,13 @@ public:
         if (dir == "up") {
             ball.position.at(0) = new_p.at(0);
             ball.position.at(1) = 2.0f * corner.at(1) - new_p.at(1) - 0.5f;
-            ball.velocity.at(1) = 100.0;
+            ball.velocity.at(1) = 30.0;
             
         }
         else if (dir == "down") {
             ball.position.at(0) = new_p.at(0);
             ball.position.at(1) = 2.0f * corner.at(1) - new_p.at(1) + 0.5f;
-            ball.velocity.at(1) = -1.0f * ball.velocity.at(1);
+            ball.velocity.at(1) = -ball.velocity.at(1);
         }
         else if (dir == "left") {
             ball.position.at(0) = 2.0f * corner.at(0) - new_p.at(0) - 0.5f;
@@ -208,7 +210,7 @@ public:
 
     void applyGravity() 
     {
-        ball.acceleration.at(1) = -500.0f;
+        ball.acceleration.at(1) = -50.0f;
     }
 
     void update()
@@ -222,7 +224,28 @@ public:
         for (Coords& coord : chunk) {
             checkCollision(coord);
         }
-        // std::cout << checked << std::endl;
+        std::cout << checked << std::endl;
         std::cout << ball.position.at(0) << " " << ball.position.at(1) << std::endl;
     }
+
+    void updateVectors()
+    {
+        for (int i = 0; i < ball.position.size(); i++) {
+            float position = ball.position.at(i);
+            float velocity = ball.velocity.at(i);
+            if (position + velocity * dt >= 0 and position + velocity * dt <= window_size.at(i)) {
+                ball.position.at(i) += velocity * dt;
+            } 
+            else {
+                if (position + velocity * dt > window_size.at(i)) {
+                    ball.position.at(i) = 2 * window_size.at(i) - (position + velocity * dt);
+                }
+                else{
+                    ball.position.at(i) = -velocity * dt - position;
+                }
+                ball.velocity.at(i) = -velocity;
+            }
+        }        
+    }
+
 };
