@@ -12,7 +12,7 @@ public:
     std::vector<float> position = {0.0f, 0.0f};
     float max_velocity = 3.0f;
     std::vector<float> acceleration = {0.0f, -100.0f};
-    std::vector<float> velocity = {20.0f, 20.0f};
+    std::vector<float> velocity = {0.0f, 20.0f};
     int radius;
     
     Ball() = default;
@@ -20,7 +20,7 @@ public:
     Ball(std::vector<float> _position, int _radius)
         : position(_position), radius(_radius) 
         {
-            std::cout << "Initialized" << std::endl;
+            //std::cout << "Initialized" << std::endl;
         }
 };
 
@@ -38,7 +38,7 @@ public:
         : chunks(4)
         {
             obstacle_map = generateObstacleMap(file_name);
-            std::cout << chunks.size() << std::endl;
+            //std::cout << chunks.size() << std::endl;
             fillChunks();
         }
 
@@ -64,7 +64,7 @@ public:
                     starting_point.x = i;
                     starting_point.y = line_num;
                 }
-                std::cout << line[i] << " ";
+                //std::cout << line[i] << " ";
                 vec.push_back(line[i]); // Add character to vector
             }
             vectorOfVectors.push_back(vec); // Add vector to vector of vectors
@@ -84,12 +84,12 @@ public:
         for (int i = 0; i < obstacle_map.size(); i++) {
             for (int j = 0; j < obstacle_map.at(0).size(); j++) {
                 if (obstacle_map[i][j] == 'M') {
-                    std::cout << obstacle_map.at(0).size() << std::endl;
+                    //std::cout << obstacle_map.at(0).size() << std::endl;
                     chunks.at(j/20).emplace_back(j,20 - i);
                 }
             }
         }
-        std::cout << "Filled Chunks" << std::endl;
+        //std::cout << "Filled Chunks" << std::endl;
     }
 
     std::vector<std::vector<Coords>>& getChunks()
@@ -108,7 +108,7 @@ class Solver
 public:
     Ball ball;
     ObstacleMap obstacle_map;
-    float dt = 0.02f;
+    float dt = 0.001f;
     std::vector<int> window_size = {80, 20};
     std::vector<float> new_p;
     int checked = 0;
@@ -117,15 +117,17 @@ public:
         : ball(ball_position, ball_radius), obstacle_map("../maps/stage_1.txt")
         {}
 
-    void checkCollision(const Coords& obstacle_coords) 
+    bool checkCollision(const Coords& obstacle_coords) 
     {   
         if (std::abs(new_p.at(0) - obstacle_coords.x) < 1.0f && std::abs(new_p.at(1) - obstacle_coords.y) < 1.0f) {
             calculateBounce(obstacle_coords);   
             checked += 1;
+            return true;
         }
         else {
             updateVectors();
             ball.position = new_p;
+            return false;
         }
     }
 
@@ -148,7 +150,7 @@ public:
             else {
                 corner = {obstacle_coords.x - 0.5f, obstacle_coords.y + 0.5f};
                 projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
-                if (projected_diff.at(1) > 0) {
+                if (projected_diff.at(1) >= 0) {
                     setBounceVelocity("up", corner);
                 }
                 else {
@@ -170,7 +172,7 @@ public:
             else {
                 corner = {obstacle_coords.x + 1.5f, obstacle_coords.y + 1.5f};
                 projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
-                if (projected_diff.at(1) > 0) {
+                if (projected_diff.at(1) >= 0) {
                     setBounceVelocity("up", corner);
                 }
                 else {
@@ -203,14 +205,21 @@ public:
             ball.position.at(1) = new_p.at(1);
             ball.velocity.at(0) = -ball.velocity.at(0);
         }
-        new_p = ball.position;
-        // std::cout << "done!" << std::endl;
-        
+        new_p = ball.position;     
     }
 
     void applyGravity() 
     {
         ball.acceleration.at(1) = -50.0f;
+    }
+
+    bool compareByDistance(const Coords& a, const Coords& b, const std::vector<float>& ref) 
+    {   
+        std::vector<float> avec = {a.x, a.y};
+        std::vector<float> bvec = {b.x, b.y};
+        std::vector<float> a2 = (avec - ref) * (avec - ref);
+        std::vector<float> b2 = (bvec - ref) * (bvec - ref);
+        return  (a2[0] + a2[1]) < (b2[0] + b2[1]);
     }
 
     void update()
@@ -220,12 +229,22 @@ public:
         ball.velocity = ball.velocity + ball.acceleration * dt;
         new_p = ball.position + ball.velocity * dt;
         std::vector<Coords> chunk = obstacle_map.getChunks()[floor(ball.position.at(0)/20)];
-        // std::cout << chunk << std::endl;
+
+        std::sort(chunk.begin(), chunk.end(), [this](const Coords& a, Coords& b) {
+        return compareByDistance(a, b, this->ball.position);
+        });
+
+        // //std::cout << chunk << std::endl;
         for (Coords& coord : chunk) {
-            checkCollision(coord);
+            bool collided = checkCollision(coord);
+            if (collided) {
+                //std::cout << "collided" << std::endl;
+                break; 
+            }
         }
-        std::cout << checked << std::endl;
-        std::cout << ball.position.at(0) << " " << ball.position.at(1) << std::endl;
+        //std::cout << chunk[0].x << " " << chunk[0].y <<std::endl;
+        //std::cout << checked << std::endl;
+        //std::cout << ball.position.at(0) << " " << ball.position.at(1) << std::endl;
     }
 
     void updateVectors()

@@ -11,7 +11,9 @@ int main() {
     Renderer renderer(80, 20);
 
     for (int i = 0; i < 1000; i++) {
-        solver.update();
+        for (int i = 0; i < 20; i++) {
+            solver.update();
+        }
         renderer.renderScene(solver);
         renderer.printScene();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
