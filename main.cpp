@@ -10,7 +10,7 @@ int main() {
     Solver solver({20,10}, 1);
     Renderer renderer(80, 20);
 
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 2000; i++) {
         for (int i = 0; i < 20; i++) {
             solver.update();
         }

@@ -12,7 +12,7 @@ public:
     std::vector<float> position = {0.0f, 0.0f};
     float max_velocity = 3.0f;
     std::vector<float> acceleration = {0.0f, -100.0f};
-    std::vector<float> velocity = {0.0f, 20.0f};
+    std::vector<float> velocity = {30.0f, 0.0f};
     int radius;
     
     Ball() = default;
@@ -108,7 +108,7 @@ class Solver
 public:
     Ball ball;
     ObstacleMap obstacle_map;
-    float dt = 0.001f;
+    float dt = 0.005f;
     std::vector<int> window_size = {80, 20};
     std::vector<float> new_p;
     int checked = 0;
@@ -138,7 +138,7 @@ public:
         
         if (ball.position.at(0) < obstacle_coords.x) {
             if (ball.position.at(1) < obstacle_coords.y) {
-                corner = {obstacle_coords.x - 0.5f, obstacle_coords.y - 0.5f};
+                corner = {obstacle_coords.x, obstacle_coords.y};
                 projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
                 if (projected_diff.at(1) > 0) {
                     setBounceVelocity("left", corner);
@@ -148,7 +148,7 @@ public:
                 }
             } 
             else {
-                corner = {obstacle_coords.x - 0.5f, obstacle_coords.y + 0.5f};
+                corner = {obstacle_coords.x, obstacle_coords.y + 1.0f};
                 projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
                 if (projected_diff.at(1) >= 0) {
                     setBounceVelocity("up", corner);
@@ -160,7 +160,7 @@ public:
         } 
         else {
             if (ball.position.at(1) < obstacle_coords.y) {
-                corner = {obstacle_coords.x + 0.5f, obstacle_coords.y - 0.5f};
+                corner = {obstacle_coords.x + 1.0f, obstacle_coords.y};
                 projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
                 if (projected_diff.at(1) > 0) {
                     setBounceVelocity("right", corner);
@@ -170,7 +170,7 @@ public:
                 }
             } 
             else {
-                corner = {obstacle_coords.x + 1.5f, obstacle_coords.y + 1.5f};
+                corner = {obstacle_coords.x + 1.0f, obstacle_coords.y + 1.0f};
                 projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
                 if (projected_diff.at(1) >= 0) {
                     setBounceVelocity("up", corner);
@@ -187,7 +187,7 @@ public:
         if (dir == "up") {
             ball.position.at(0) = new_p.at(0);
             ball.position.at(1) = 2.0f * corner.at(1) - new_p.at(1) - 0.5f;
-            ball.velocity.at(1) = 30.0;
+            ball.velocity.at(1) = 30.0f;
             
         }
         else if (dir == "down") {
