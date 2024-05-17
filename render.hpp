@@ -26,7 +26,7 @@ public:
     void renderScene(Solver& solver)
     {   
         // setBackground(' ');
-        background = solver.obstacle_map.getMap();
+        // background = solver.obstacle_map.getMap();
         insertBall(solver);
     }
 
@@ -37,11 +37,18 @@ public:
         background[ball_y_pos][ball_x_pos] = 'o';
     }
 
-    void setBackground(int num)
+    void loadBackground(Solver& solver)
     {
         for (int i = 0; i < background_height; i++) {
             for (int j = 0; j < background_width; j++) {
-                background[i][j] = num; // Set each element to 1
+                background[i][j] = ' '; // Set each element to 1
+            }
+        }
+        for (Obstacle& obstacle : solver.obstacle_map.obstacles) {
+            for (int i = obstacle.location[0]/1; i < (obstacle.location[0] + obstacle.dimensions[0])/1; i++) {
+                for (int j = obstacle.location[1]/1; j < (obstacle.location[1] + obstacle.dimensions[1])/1; j++) {
+                    background[background_height - j - 1][i] = 'M';
+                }
             }
         }
     }

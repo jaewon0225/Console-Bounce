@@ -3,16 +3,17 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "math.hpp"
 
 class Ball
 {
 public:
-    std::vector<float> position = {0.0f, 0.0f};
-    float max_velocity = 3.0f;
-    std::vector<float> acceleration = {0.0f, -100.0f};
-    std::vector<float> velocity = {30.0f, 0.0f};
+    std::vector<float> position     = {0.0f, 0.0f};
+    float max_velocity              = 3.0f;
+    std::vector<float> acceleration = {0.0f, 0.0f};
+    std::vector<float> velocity     = {20.0f, 0.0f};
     int radius;
     
     Ball() = default;
@@ -24,6 +25,15 @@ public:
         }
 };
 
+struct Obstacle
+{
+    std::vector<float> dimensions;
+    std::vector<float> location;
+
+    Obstacle(std::vector<float> dimensions, std::vector<float> location)
+        : dimensions(dimensions), location(location) {}
+};
+
 class ObstacleMap
 {
 private:
@@ -32,74 +42,46 @@ private:
     std::vector<std::vector<Coords>> chunks;
 
 public:
+    std::vector<Obstacle> obstacles;
     ObstacleMap() = default;
 
     ObstacleMap(std::string file_name)
         : chunks(1)
         {
-            obstacle_map = generateObstacleMap(file_name);
-            //std::cout << chunks.size() << std::endl;
-            fillChunks();
+            loadObstacles(file_name);
         }
 
-    std::vector<std::vector<char>> generateObstacleMap(const std::string& filename) {
-        std::vector<std::vector<char>> vectorOfVectors;
-
-        // Open the file
-        std::ifstream file(filename);
-        if (!file.is_open()) {
-            std::cerr << "Error opening file: " << filename << std::endl;
-            return vectorOfVectors; // Return empty vector if file cannot be opened
+    void loadObstacles(std::string file_path)
+    {
+        std::ifstream infile(file_path);
+        if (!infile) {
+            std::cerr << "Failed to open file!" << std::endl;
         }
 
-        // Read file line by line
+        // Read each line from the file
         std::string line;
-        int line_num = 0;
-        while (std::getline(file, line)) {
-            std::vector<char> vec;
-            // Iterate through each character in the line
-            for (int i = 0; i < line.size(); i++) {
-                if (line[i] == 'X') {
-                    line[i] = ' ';
-                    starting_point.x = i;
-                    starting_point.y = line_num;
-                }
-                //std::cout << line[i] << " ";
-                vec.push_back(line[i]); // Add character to vector
+        while (std::getline(infile, line)) {
+            // Create a string stream from the line
+            std::istringstream iss(line);
+
+            // Parse the values from the line
+            float x1, y1, x2, y2;
+            char comma;
+            if (!(iss >> x1 >> comma >> y1 >> comma >> x2 >> comma >> y2)) {
+                std::cerr << "Failed to parse line: " << line << std::endl;
+                continue;
             }
-            vectorOfVectors.push_back(vec); // Add vector to vector of vectors
+
+            std::vector<float> location = {x1, y1};
+            std::vector<float> dimension = {x2, y2};
+
+            // Create Coordinate objects and push them into the vector
+            obstacles.emplace_back(dimension, location);
         }
 
-        file.close(); // Close the file
-        return vectorOfVectors;
-    }
+        // Close the file
+        infile.close();
 
-    std::vector<std::vector<char>>& getMap()
-    {
-        return obstacle_map;
-    }
-
-    void fillChunks()
-    {
-        for (int i = 0; i < obstacle_map.size(); i++) {
-            for (int j = 0; j < obstacle_map.at(0).size(); j++) {
-                if (obstacle_map[i][j] == 'M') {
-                    //std::cout << obstacle_map.at(0).size() << std::endl;
-                    chunks.at(0).emplace_back(j,20 - i);
-                }
-            }
-        }
-        //std::cout << "Filled Chunks" << std::endl;
-    }
-
-    std::vector<std::vector<Coords>>& getChunks()
-    {
-        return chunks;
-    }
-
-    void loadStage(std::string map_path) 
-    {
-        obstacle_map = generateObstacleMap(map_path);
     }
 };
 
@@ -111,13 +93,13 @@ private:
 public:
     Ball ball;
     ObstacleMap obstacle_map;
-    float dt = 0.005f;
-    std::vector<int> window_size = {80, 20};
     std::vector<float> new_p;
-    int checked = 0;
+    float dt                     = 0.005f;
+    std::vector<int> window_size = {80, 20};
+
 
     Solver(std::vector<float> ball_position, int ball_radius)
-        : ball(ball_position, ball_radius), obstacle_map("../maps/stage_1.txt")
+        : ball(ball_position, ball_radius), obstacle_map("../maps/stage_1_obstacles.txt")
         {}
 
     void setBounceVelocity(const std::string& dir, const std::vector<float>& corner)
@@ -156,65 +138,46 @@ public:
     void update()
     {
         applyGravity();
-        updateVectors2();
+        updateVectors();
     }
 
     void updateVectors()
     {
-        for (int i = 0; i < ball.position.size(); i++) {
-            float position = ball.position.at(i);
-            float velocity = ball.velocity.at(i);
-            if (position + velocity * dt >= 0 and position + velocity * dt <= window_size.at(i)) {
-                ball.position.at(i) += velocity * dt;
-            } 
-            else {
-                if (position + velocity * dt > window_size.at(i)) {
-                    ball.position.at(i) = 2 * window_size.at(i) - (position + velocity * dt);
-                }
-                else{
-                    ball.position.at(i) = -velocity * dt - position;
-                }
-                ball.velocity.at(i) = -velocity;
-            }
-        }        
-    }
-
-    void updateVectors2()
-    {
         ball.velocity = ball.velocity + ball.acceleration * dt;
         std::vector<float> x_unit_vel            = ball.velocity / ball.velocity[0];
         std::vector<float> y_unit_vel            = ball.velocity / ball.velocity[1];
-        std::vector<std::vector<Coords>> chunks  = obstacle_map.getChunks();
         std::vector<float> curr_p                = ball.position;
         std::vector<float> closest_intersect     = {1000000.0f, 1000000.0f, 1000000.0f}; // {x, y, distance^2 from curr_p}
         std::string direction;
         new_p                                    = ball.position + ball.velocity * dt;
         collided                                 = false;
 
-
-        for (Coords& coord : chunks[0]) {
+        for (Obstacle& obstacle : obstacle_map.obstacles) {
+            std::vector<float> xdim = {obstacle.dimensions[0],0};
+            std::vector<float> ydim = {0,obstacle.dimensions[1]};
             //check if the ball is in the collision zone 
             if (ball.velocity[0] > 0) {
                 if (ball.velocity[1] > 0) {
-                    projectBall(1, y_unit_vel, {coord.x, coord.y}, {coord.x + 1.1f, coord.y}, curr_p, new_p, closest_intersect, direction, "down");
-                    projectBall(2, x_unit_vel, {coord.x, coord.y}, {coord.x, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "left");
+                    projectBall(1, y_unit_vel, obstacle.location, obstacle.location + xdim, curr_p, new_p, closest_intersect, direction, "down");
+                    projectBall(2, x_unit_vel, obstacle.location, obstacle.location + ydim, curr_p, new_p, closest_intersect, direction, "left");
                 }
                 else if (ball.velocity[1] <= 0)
                 {
-                    projectBall(1, y_unit_vel, {coord.x, coord.y}, {coord.x + 1.1f, coord.y}, curr_p, new_p, closest_intersect, direction, "up");
-                    projectBall(2, x_unit_vel, {coord.x + 1.1f, coord.y}, {coord.x + 1.1f, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "left");
+                    projectBall(1, y_unit_vel, obstacle.location + ydim, obstacle.location + obstacle.dimensions, curr_p, new_p, closest_intersect, direction, "up");
+                    projectBall(2, x_unit_vel, obstacle.location, obstacle.location + ydim, curr_p, new_p, closest_intersect, direction, "left");
                 }
                 
             }
             else if (ball.velocity[0] <= 0) {
                 if (ball.velocity[1] > 0) {
-                    projectBall(1, y_unit_vel, {coord.x, coord.y + 1.1f}, {coord.x + 1.1f, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "down");
-                    projectBall(2, x_unit_vel, {coord.x, coord.y}, {coord.x, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "right");
+                    projectBall(1, y_unit_vel, obstacle.location, obstacle.location + xdim, curr_p, new_p, closest_intersect, direction, "down");
+                    projectBall(2, x_unit_vel, obstacle.location + xdim, obstacle.location + obstacle.dimensions, curr_p, new_p, closest_intersect, direction, "right");
                 }
                 else if (ball.velocity[1] <= 0)
                 {
-                    projectBall(1, y_unit_vel, {coord.x, coord.y + 1.1f}, {coord.x + 1.1f, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "up");
-                    projectBall(2, x_unit_vel, {coord.x + 1.1f, coord.y}, {coord.x + 1.1f, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "right");
+                    projectBall(1, y_unit_vel, obstacle.location + ydim, obstacle.location + obstacle.dimensions, curr_p, new_p, closest_intersect, direction, "up");
+                    projectBall(2, x_unit_vel, obstacle.location + xdim, obstacle.location + obstacle.dimensions, curr_p, new_p, closest_intersect, direction, "right");
+            
                 }
             }
         }
@@ -223,12 +186,26 @@ public:
             setBounceVelocity(direction, {closest_intersect[0], closest_intersect[1]});
         }
         else {
-            updateVectors();
+            for (int i = 0; i < ball.position.size(); i++) {
+                float position = ball.position.at(i);
+                float velocity = ball.velocity.at(i);
+                if (position + velocity * dt >= 0 and position + velocity * dt <= window_size.at(i)) {
+                    ball.position.at(i) += velocity * dt;
+                } 
+                else {
+                    if (position + velocity * dt > window_size.at(i)) {
+                        ball.position.at(i) = 2 * window_size.at(i) - (position + velocity * dt);
+                    }
+                    else{
+                        ball.position.at(i) = -velocity * dt - position;
+                    }
+                    ball.velocity.at(i) = -velocity;
+                }
+            }        
         }
     }
 
     //sides: 1 for horizontal 2 for vertical
-
     void projectBall(const int& side, const std::vector<float>& unit_vel, const std::vector<float>& coord1, const std::vector<float>& coord2, const std::vector<float>& curr_p, const std::vector<float>& new_p, std::vector<float>& closest_intersect, std::string& dir, const std::string& curr_dir)
     {
         std::vector<float> intersect;
