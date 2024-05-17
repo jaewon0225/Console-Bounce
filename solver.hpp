@@ -38,15 +38,12 @@ class ObstacleMap
 {
 private:
     std::vector<std::vector<char>> obstacle_map;
-    Coords starting_point;
-    std::vector<std::vector<Coords>> chunks;
 
 public:
     std::vector<Obstacle> obstacles;
     ObstacleMap() = default;
 
     ObstacleMap(std::string file_name)
-        : chunks(1)
         {
             loadObstacles(file_name);
         }
