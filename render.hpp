@@ -11,8 +11,6 @@ class Renderer
 private:
     const int background_width;
     const int background_height;
-    std::deque<int> x_tail = {0,1,2,3,4};
-    std::deque<int> y_tail = {0,1,2,3,4};
     std::vector<std::vector<char>> background;
 
 
@@ -34,17 +32,9 @@ public:
 
     void insertBall(Solver& solver)
     {
-        // for (int i = 0; i < x_tail.size(); i++) {
-        //     background[x_tail.at(i)][y_tail.at(i)] = 'o';
-        // }
-        // for (int& i : x_tail) { std::cout << i << std::endl; }
         int ball_x_pos = std::floor(solver.ball.position.at(0));
         int ball_y_pos = std::floor(background_height - solver.ball.position.at(1));
         background[ball_y_pos][ball_x_pos] = 'o';
-        // x_tail.pop_back();
-        // y_tail.pop_back();
-        // x_tail.push_front(ball_x_pos);
-        // y_tail.push_front(ball_y_pos);        
     }
 
     void setBackground(int num)

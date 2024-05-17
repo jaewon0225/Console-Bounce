@@ -11,8 +11,9 @@ int main() {
     Renderer renderer(80, 20);
 
     for (int i = 0; i < 2000; i++) {
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 15; i++) {
             solver.update();
+            std::cout << solver.ball.position <<std::endl;
         }
         renderer.renderScene(solver);
         renderer.printScene();

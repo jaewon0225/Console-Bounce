@@ -35,7 +35,7 @@ public:
     ObstacleMap() = default;
 
     ObstacleMap(std::string file_name)
-        : chunks(4)
+        : chunks(1)
         {
             obstacle_map = generateObstacleMap(file_name);
             //std::cout << chunks.size() << std::endl;
@@ -85,7 +85,7 @@ public:
             for (int j = 0; j < obstacle_map.at(0).size(); j++) {
                 if (obstacle_map[i][j] == 'M') {
                     //std::cout << obstacle_map.at(0).size() << std::endl;
-                    chunks.at(j/20).emplace_back(j,20 - i);
+                    chunks.at(0).emplace_back(j,20 - i);
                 }
             }
         }
@@ -105,6 +105,9 @@ public:
 
 class Solver
 {
+private:
+    bool collided = false;
+
 public:
     Ball ball;
     ObstacleMap obstacle_map;
@@ -117,93 +120,30 @@ public:
         : ball(ball_position, ball_radius), obstacle_map("../maps/stage_1.txt")
         {}
 
-    bool checkCollision(const Coords& obstacle_coords) 
-    {   
-        if (std::abs(new_p.at(0) - obstacle_coords.x) < 1.0f && std::abs(new_p.at(1) - obstacle_coords.y) < 1.0f) {
-            calculateBounce(obstacle_coords);   
-            checked += 1;
-            return true;
-        }
-        else {
-            updateVectors();
-            ball.position = new_p;
-            return false;
-        }
-    }
-
-    void calculateBounce(const Coords& obstacle_coords)
-    {   
-        std::vector<float> corner;
-        std::vector<float> projected_diff;
-        
-        if (ball.position.at(0) < obstacle_coords.x) {
-            if (ball.position.at(1) < obstacle_coords.y) {
-                corner = {obstacle_coords.x, obstacle_coords.y};
-                projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
-                if (projected_diff.at(1) > 0) {
-                    setBounceVelocity("left", corner);
-                }
-                else {
-                    setBounceVelocity("down", corner);
-                }
-            } 
-            else {
-                corner = {obstacle_coords.x, obstacle_coords.y + 1.0f};
-                projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
-                if (projected_diff.at(1) >= 0) {
-                    setBounceVelocity("up", corner);
-                }
-                else {
-                    setBounceVelocity("left", corner);
-                }
-            }
-        } 
-        else {
-            if (ball.position.at(1) < obstacle_coords.y) {
-                corner = {obstacle_coords.x + 1.0f, obstacle_coords.y};
-                projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
-                if (projected_diff.at(1) > 0) {
-                    setBounceVelocity("right", corner);
-                }
-                else {
-                    setBounceVelocity("down", corner);
-                }
-            } 
-            else {
-                corner = {obstacle_coords.x + 1.0f, obstacle_coords.y + 1.0f};
-                projected_diff = ball.position - (corner + ball.velocity * ((obstacle_coords.x - corner.at(0)) / ball.velocity.at(0)));
-                if (projected_diff.at(1) >= 0) {
-                    setBounceVelocity("up", corner);
-                }
-                else {
-                    setBounceVelocity("right", corner);
-                }
-            }
-        }
-    }
-
     void setBounceVelocity(const std::string& dir, const std::vector<float>& corner)
     {   
         if (dir == "up") {
             ball.position.at(0) = new_p.at(0);
-            ball.position.at(1) = 2.0f * corner.at(1) - new_p.at(1) - 0.5f;
+            ball.position.at(1) = 2.0f * corner.at(1) - new_p.at(1);
             ball.velocity.at(1) = 30.0f;
             
         }
         else if (dir == "down") {
             ball.position.at(0) = new_p.at(0);
-            ball.position.at(1) = 2.0f * corner.at(1) - new_p.at(1) + 0.5f;
+            ball.position.at(1) = 2.0f * corner.at(1) - new_p.at(1);
             ball.velocity.at(1) = -ball.velocity.at(1);
         }
         else if (dir == "left") {
-            ball.position.at(0) = 2.0f * corner.at(0) - new_p.at(0) - 0.5f;
+            ball.position.at(0) = 2.0f * corner.at(0) - new_p.at(0);
             ball.position.at(1) = new_p.at(1);
             ball.velocity.at(0) = -ball.velocity.at(0);
+            std::cout << "LEFT" << std::endl;
         }
         else if (dir == "right") {
-            ball.position.at(0) = 2.0f * corner.at(0) - new_p.at(0) + 0.5f;
+            ball.position.at(0) = 2.0f * corner.at(0) - new_p.at(0);
             ball.position.at(1) = new_p.at(1);
             ball.velocity.at(0) = -ball.velocity.at(0);
+            std::cout << "RIGHT" << std::endl;
         }
         new_p = ball.position;     
     }
@@ -213,38 +153,10 @@ public:
         ball.acceleration.at(1) = -50.0f;
     }
 
-    bool compareByDistance(const Coords& a, const Coords& b, const std::vector<float>& ref) 
-    {   
-        std::vector<float> avec = {a.x, a.y};
-        std::vector<float> bvec = {b.x, b.y};
-        std::vector<float> a2 = (avec - ref) * (avec - ref);
-        std::vector<float> b2 = (bvec - ref) * (bvec - ref);
-        return  (a2[0] + a2[1]) < (b2[0] + b2[1]);
-    }
-
     void update()
-    {   
+    {
         applyGravity();
-        // updateVectors();
-        ball.velocity = ball.velocity + ball.acceleration * dt;
-        new_p = ball.position + ball.velocity * dt;
-        std::vector<Coords> chunk = obstacle_map.getChunks()[floor(ball.position.at(0)/20)];
-
-        std::sort(chunk.begin(), chunk.end(), [this](const Coords& a, Coords& b) {
-        return compareByDistance(a, b, this->ball.position);
-        });
-
-        // //std::cout << chunk << std::endl;
-        for (Coords& coord : chunk) {
-            bool collided = checkCollision(coord);
-            if (collided) {
-                //std::cout << "collided" << std::endl;
-                break; 
-            }
-        }
-        //std::cout << chunk[0].x << " " << chunk[0].y <<std::endl;
-        //std::cout << checked << std::endl;
-        //std::cout << ball.position.at(0) << " " << ball.position.at(1) << std::endl;
+        updateVectors2();
     }
 
     void updateVectors()
@@ -267,4 +179,86 @@ public:
         }        
     }
 
+    void updateVectors2()
+    {
+        ball.velocity = ball.velocity + ball.acceleration * dt;
+        std::vector<float> x_unit_vel            = ball.velocity / ball.velocity[0];
+        std::vector<float> y_unit_vel            = ball.velocity / ball.velocity[1];
+        std::vector<std::vector<Coords>> chunks  = obstacle_map.getChunks();
+        std::vector<float> curr_p                = ball.position;
+        std::vector<float> closest_intersect     = {1000000.0f, 1000000.0f, 1000000.0f}; // {x, y, distance^2 from curr_p}
+        std::string direction;
+        new_p                                    = ball.position + ball.velocity * dt;
+        collided                                 = false;
+
+
+        for (Coords& coord : chunks[0]) {
+            //check if the ball is in the collision zone 
+            if (ball.velocity[0] > 0) {
+                if (ball.velocity[1] > 0) {
+                    projectBall(1, y_unit_vel, {coord.x, coord.y}, {coord.x + 1.1f, coord.y}, curr_p, new_p, closest_intersect, direction, "down");
+                    projectBall(2, x_unit_vel, {coord.x, coord.y}, {coord.x, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "left");
+                }
+                else if (ball.velocity[1] <= 0)
+                {
+                    projectBall(1, y_unit_vel, {coord.x, coord.y}, {coord.x + 1.1f, coord.y}, curr_p, new_p, closest_intersect, direction, "up");
+                    projectBall(2, x_unit_vel, {coord.x + 1.1f, coord.y}, {coord.x + 1.1f, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "left");
+                }
+                
+            }
+            else if (ball.velocity[0] <= 0) {
+                if (ball.velocity[1] > 0) {
+                    projectBall(1, y_unit_vel, {coord.x, coord.y + 1.1f}, {coord.x + 1.1f, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "down");
+                    projectBall(2, x_unit_vel, {coord.x, coord.y}, {coord.x, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "right");
+                }
+                else if (ball.velocity[1] <= 0)
+                {
+                    projectBall(1, y_unit_vel, {coord.x, coord.y + 1.1f}, {coord.x + 1.1f, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "up");
+                    projectBall(2, x_unit_vel, {coord.x + 1.1f, coord.y}, {coord.x + 1.1f, coord.y + 1.1f}, curr_p, new_p, closest_intersect, direction, "right");
+                }
+            }
+        }
+
+        if (collided) {
+            setBounceVelocity(direction, {closest_intersect[0], closest_intersect[1]});
+        }
+        else {
+            updateVectors();
+        }
+    }
+
+    //sides: 1 for horizontal 2 for vertical
+
+    void projectBall(const int& side, const std::vector<float>& unit_vel, const std::vector<float>& coord1, const std::vector<float>& coord2, const std::vector<float>& curr_p, const std::vector<float>& new_p, std::vector<float>& closest_intersect, std::string& dir, const std::string& curr_dir)
+    {
+        std::vector<float> intersect;
+        if (side == 1) 
+        {
+            intersect = curr_p + unit_vel * (coord1[1] - curr_p[1]);
+            if (intersect[0] >= std::min(coord1[0], coord2[0]) && intersect[0] <= std::max(coord1[0], coord2[0])) {
+                if ((sgn(curr_p[1] - intersect[1])) != (sgn(new_p[1] - intersect[1]))) {
+                    float dist2 = pow(intersect[0] - curr_p[0], 2.0f) + pow(intersect[1] - curr_p[1], 2.0f);
+                    if (dist2 < closest_intersect[2]) {
+                        closest_intersect = {intersect[0], intersect[1], dist2};
+                        dir = curr_dir;
+                        collided = true;
+                    }
+                }
+            }
+        } 
+        else if (side == 2)
+        {
+            intersect = curr_p + unit_vel * (coord1[0] - curr_p[0]);
+            if (intersect[1] >= std::min(coord1[1], coord2[1]) && intersect[1] <= std::max(coord1[1], coord2[1])) {
+                if ((sgn(curr_p[0] - intersect[0])) != (sgn(new_p[0] - intersect[0]))) {
+                    float dist2 = pow(intersect[0] - curr_p[0], 2.0f) + pow(intersect[1] - curr_p[1], 2.0f);
+                    if (dist2 < closest_intersect[2]) {
+                        closest_intersect = {intersect[0], intersect[1], dist2};
+                        dir = curr_dir;
+                        collided = true;
+                    }
+                }
+            }
+        }   
+    }
 };
