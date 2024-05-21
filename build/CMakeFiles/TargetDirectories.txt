@@ -1,3 +1,0 @@
-/Users/jaewon/cpp_projects/Console_Bounce/build/CMakeFiles/Console_Game.dir
-/Users/jaewon/cpp_projects/Console_Bounce/build/CMakeFiles/edit_cache.dir
-/Users/jaewon/cpp_projects/Console_Bounce/build/CMakeFiles/rebuild_cache.dir
