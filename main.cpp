@@ -11,7 +11,7 @@ int main() {
 
     for (int i = 0; i < 3000; i++) {
 
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 8; i++) {
             solver.update();
         }
         renderer.loadBackground(solver);
