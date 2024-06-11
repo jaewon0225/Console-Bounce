@@ -96,7 +96,7 @@ public:
 
 
     Solver(std::vector<float> ball_position, int ball_radius)
-        : ball(ball_position, ball_radius), obstacle_map("../maps/stage_1_obstacles.txt")
+        : ball(ball_position, ball_radius), obstacle_map("../maps/obstacles.txt")
         {}
 
     void setBounceVelocity(const std::string& dir, const std::vector<float>& corner)
